@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -6,11 +8,11 @@ import 'package:http/http.dart' as http;
 class NasaData {
   final String date;
   final String explanation;
-  final String hdurl;
+  final String? hdurl;
   final String media_type;
   final String service_version;
   final String title;
-  final String url;
+  final String? url;
 
   NasaData(
       {required this.date,
@@ -21,39 +23,34 @@ class NasaData {
       required this.title,
       required this.url});
 
-  static Future<NasaData> fetchNasaData() async {
+  static Future<List<NasaData>> fetchNasaData() async {
     final response = await http.get(Uri.parse(
         'https://api.nasa.gov/planetary/apod?start_date=2005-09-23&end_date=2006-09-23&api_key=Gu4p8S9mFz35ctSZVzmr1dftPTyfpgBuqjBe7Q6y'));
-    if ((response.statusCode == 200)) {
-      return NasaData.fromJson(
-          jsonDecode(response.body) as List<Map<String, dynamic>>);
+    if (response.statusCode == 200) {
+      // List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+      final returnValue = (jsonDecode(response.body) as List<dynamic>)
+          .map((json) => NasaData.fromJson(json as Map<String, dynamic>))
+          .toList();
+      print("~~~~~~~~~~~~~~~~~~~~~~~~");
+      returnValue.forEach((x) => print(x.hdurl));
+      print("~~~~~~~~~~~~~~~~~~~~~~~~");
+
+      return returnValue;
     } else {
-      throw Exception("Failed");
+      throw Exception("Failed to load NasaData");
     }
   }
 
-  factory NasaData.fromJson(List<Map<String, dynamic>> json) {
-    return switch (json) {
-      {
-        'date': String date,
-        'explanation': String explanation,
-        'hdurl': String hdurl,
-        'media_type': String media_type,
-        'service_version': String service_version,
-        'title': String title,
-        'url': String url,
-      } =>
-        NasaData(
-          date: date,
-          explanation: explanation,
-          hdurl: hdurl,
-          media_type: media_type,
-          service_version: service_version,
-          title: title,
-          url: url,
-        ),
-      _ => throw const FormatException('Failed to load NasaData.'),
-    };
+  factory NasaData.fromJson(Map<String, dynamic> json) {
+    return NasaData(
+      date: json['date'] as String,
+      explanation: json['explanation'] as String,
+      hdurl: json['hdurl'] as String?,
+      media_type: json['media_type'] as String,
+      service_version: json['service_version'] as String,
+      title: json['title'] as String,
+      url: json['url'] as String?,
+    );
   }
 }
 
@@ -69,7 +66,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late Future<NasaData> futureNasaData;
+  late Future<List<NasaData>> futureNasaData;
 
   @override
   void initState() {
@@ -110,3 +107,12 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+
+
+// void main(){
+//   final x = [5, 6, 7, 8, 9];
+
+//   final y = x.map((e) => e * 2);
+
+//   print(y);
+// }
