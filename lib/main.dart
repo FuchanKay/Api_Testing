@@ -1,58 +1,10 @@
 import 'dart:math';
 
+import 'package:api_testing/NasaData.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
-class NasaData {
-  final String date;
-  final String explanation;
-  final String? hdurl;
-  final String media_type;
-  final String service_version;
-  final String title;
-  final String? url;
-
-  NasaData(
-      {required this.date,
-      required this.explanation,
-      required this.hdurl,
-      required this.media_type,
-      required this.service_version,
-      required this.title,
-      required this.url});
-
-  static Future<List<NasaData>> fetchNasaData() async {
-    final response = await http.get(Uri.parse(
-        'https://api.nasa.gov/planetary/apod?start_date=2005-09-23&end_date=2006-09-23&api_key=Gu4p8S9mFz35ctSZVzmr1dftPTyfpgBuqjBe7Q6y'));
-    if (response.statusCode == 200) {
-      // List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
-      final returnValue = (jsonDecode(response.body) as List<dynamic>)
-          .map((json) => NasaData.fromJson(json as Map<String, dynamic>))
-          .toList();
-      print("~~~~~~~~~~~~~~~~~~~~~~~~");
-      returnValue.forEach((x) => print(x.hdurl));
-      print("~~~~~~~~~~~~~~~~~~~~~~~~");
-
-      return returnValue;
-    } else {
-      throw Exception("Failed to load NasaData");
-    }
-  }
-
-  factory NasaData.fromJson(Map<String, dynamic> json) {
-    return NasaData(
-      date: json['date'] as String,
-      explanation: json['explanation'] as String,
-      hdurl: json['hdurl'] as String?,
-      media_type: json['media_type'] as String,
-      service_version: json['service_version'] as String,
-      title: json['title'] as String,
-      url: json['url'] as String?,
-    );
-  }
-}
 
 void main() {
   runApp(const MyApp());
@@ -66,53 +18,101 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late Future<List<NasaData>> futureNasaData;
-
+  List<NasaData> futureNasaData = [];
+  static List<String?> urlList = [];
   @override
   void initState() {
     super.initState();
-    futureNasaData = NasaData.fetchNasaData();
   }
 
   @override
   Widget build(BuildContext context) {
+    retrieveData();
+    print("future nasa data: ");
     print(futureNasaData);
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: const Text('Image from URL')),
         body: Center(
-          child: Image.network(
-            'https://example.com/your-image.jpg',
-            loadingBuilder: (BuildContext context, Widget child,
-                ImageChunkEvent? loadingProgress) {
-              if (loadingProgress == null) {
-                return child;
-              }
-              return Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                          (loadingProgress.expectedTotalBytes ?? 1)
-                      : null,
-                ),
-              );
-            },
-            errorBuilder:
-                (BuildContext context, Object error, StackTrace? stackTrace) {
-              return const Text('Failed to load image');
-            },
-          ),
-        ),
+            child: Column(
+          children: [
+            // NasaImage(url: ""),
+            Expanded(
+              child: ListView.builder(
+                  itemCount: urlList.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      // child: NasaImage(url: urlList[index]),
+                      child: NasaImage(url: ""),
+                    );
+                  }),
+            )
+          ],
+        )),
       ),
+    );
+  }
+
+  retrieveData() async {
+    futureNasaData = await NasaData.fetchNasaData();
+  }
+}
+
+class NasaImage extends StatelessWidget {
+  final String? url;
+  const NasaImage({super.key, required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    const nonNullUrl =
+        "https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@1.5x.png" ??
+            "url not found";
+    return Image.network(
+      nonNullUrl,
+      fit: BoxFit.fill,
+      loadingBuilder: (BuildContext context, Widget child,
+          ImageChunkEvent? loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Center(
+          child: CircularProgressIndicator(
+            value: loadingProgress.expectedTotalBytes != null
+                ? loadingProgress.cumulativeBytesLoaded /
+                    loadingProgress.expectedTotalBytes!
+                : null,
+          ),
+        );
+      },
     );
   }
 }
 
+// class NasaImage extends StatelessWidget {
+//   final String? url;
+//   const NasaImage({super.key, required this.url});
 
-// void main(){
-//   final x = [5, 6, 7, 8, 9];
-
-//   final y = x.map((e) => e * 2);
-
-//   print(y);
-// }
+//   @override
+//   Widget build(BuildContext context) {
+//     final nonNullUrl = url ?? "url not found";  
+//     return Image.network(
+//       nonNullUrl,
+//       loadingBuilder: (BuildContext context, Widget child,
+//           ImageChunkEvent? loadingProgress) {
+//         if (loadingProgress == null) {
+//           return child;
+//         }
+//         return Center(
+//           child: CircularProgressIndicator(
+//             value: loadingProgress.expectedTotalBytes != null
+//                 ? loadingProgress.cumulativeBytesLoaded /
+//                     (loadingProgress.expectedTotalBytes ?? 1)
+//                 : null,
+//           ),
+//         );
+//       },
+//       errorBuilder:
+//           (BuildContext context, Object error, StackTrace? stackTrace) {
+//         return const Text('Failed to load image');
+//       },
+//     );
+//   }
