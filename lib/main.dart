@@ -54,8 +54,11 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  retrieveData() async {
-    futureNasaData = await NasaData.fetchNasaData();
+  retrieveData() {
+WidgetsBinding.instance.addPostFrameCallback((_) async {    
+futureNasaData = await NasaData.fetchNasaData();
+});
+    //futureNasaData = await NasaData.fetchNasaData();
   }
 }
 
