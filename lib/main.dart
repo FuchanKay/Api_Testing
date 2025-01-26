@@ -23,11 +23,11 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    retrieveData();
   }
 
   @override
   Widget build(BuildContext context) {
-    retrieveData();
     print("future nasa data: ");
     print(futureNasaData);
     return MaterialApp(
@@ -54,11 +54,12 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  retrieveData() {
-WidgetsBinding.instance.addPostFrameCallback((_) async {    
-futureNasaData = await NasaData.fetchNasaData();
-});
-    //futureNasaData = await NasaData.fetchNasaData();
+  Future<void> retrieveData() async {
+    final data = await NasaData.fetchNasaData();
+    // Update the state and rebuild the UI
+    setState(() {
+      nasaData = data;
+    });
   }
 }
 
